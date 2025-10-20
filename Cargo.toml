@@ -15,7 +15,7 @@ cellular_raza = { version = "0.4.0", features = ["approx", "pyo3"] }
 itertools = "0.14"
 nalgebra = { version = "0.34", features = ["serde", "serde-serialize"] }
 num = { version = "0.4.3", features = ["rand", "serde"] }
-pyo3 = { version = "0.26", features = ["serde", "py-clone", "multiple-pymethods"] }
+pyo3 = { version = "0.27", features = ["serde", "py-clone", "multiple-pymethods"] }
 rand = { version = "0.9", features = ["serde"] }
 rand_chacha = { version = "0.9", features = ["serde"] }
 rand_distr = "0.5.1"
