@@ -10,6 +10,8 @@ import json
 import os
 import pandas as pd
 
+from cr_nematic_structure.cr_nematic_structure import Configuration
+
 
 def get_last_output_path():
     return Path(sorted(glob.glob("out/*"))[-1])
@@ -46,11 +48,11 @@ def load_cells_from_iteration(output_path: Path, iteration: int):
     return df
 
 
-def get_cell_meshes(iteration: int, path: Path):
+def get_cell_meshes(iteration: int, path: Path, growth_rate_max):
     cells = load_cells_from_iteration(path, iteration)
-    positions = np.array([x for x in cells["cell.mechanics.pos"]], dtype=float)
+    positions = [x for x in cells["cell.mechanics.pos"]]
     radii = np.array([x for x in cells["cell.interaction.radius"]], dtype=float)
-    growth_rate = np.array([x for x in cells["cell.growth_rate"]], dtype=float)
+    neighbors = np.array([x for x in cells["cell.neighbors"]], dtype=float)
     cell_surfaces = []
     for i, p in enumerate(positions):
         meshes = []
@@ -67,9 +69,7 @@ def get_cell_meshes(iteration: int, path: Path):
             direction = pos2 - center
             radius = radii[i]
             height = float(np.linalg.norm(pos1 - pos2))
-            cylinder = pv.Cylinder(
-                center=center, direction=direction, radius=radius, height=height
-            )
+            cylinder = pv.Cylinder(center=center, direction=direction, radius=radius, height=height)
             meshes.append(cylinder)
         combined = pv.MultiBlock(meshes).combine()
         if combined is None:
@@ -78,12 +78,16 @@ def get_cell_meshes(iteration: int, path: Path):
         if merged is None:
             return None
         merged = merged.clean()
-        cell_surfaces.append((merged, growth_rate[i]))
+        merged["color"] = np.repeat(neighbors[i], len(merged.points))
+        cell_surfaces.append(merged)
     return cell_surfaces
 
 
 def plot_spheres(
     iteration: int,
+    domain_size: tuple[float, float, float],
+    growth_rate_max: float,
+    neighbor_cap: int,
     path: Path = Path("./"),
     opath: Path | None = None,
     overwrite: bool = False,
@@ -94,7 +98,7 @@ def plot_spheres(
         opath.parent.mkdir(parents=True, exist_ok=True)
     if os.path.isfile(opath) and overwrite is False:
         return None
-    cell_meshes = get_cell_meshes(iteration, path)
+    cell_meshes = get_cell_meshes(iteration, path, growth_rate_max)
     cell_meshes = cell_meshes if cell_meshes is not None else []
 
     # General Settings
@@ -102,29 +106,27 @@ def plot_spheres(
     plotter.set_background([100, 100, 100])
 
     # Draw box around everything
-    dx = 3e-6
-    box = pv.Box(bounds=(-dx, 200e-6 + dx, 0 - dx, 15e-6 + dx, 0 - dx, 45e-6 + dx))
+    box = pv.Box(bounds=(0, domain_size[0], 0, domain_size[1], 0, domain_size[1]))
     plotter.add_mesh(box, style="wireframe", line_width=15)
-    color_min = np.array([69, 124, 214])
-    color_max = np.array([82, 191, 106])
-    for cell, growth_rate in cell_meshes:
-        # TODO MAGIC NUMBERS
-        q = growth_rate / 1e-7
-        color = (1 - q) * color_min + q * color_max
+
+    for cell in cell_meshes:
         plotter.add_mesh(
             cell,
             show_edges=False,
-            color=(int(color[0]), int(color[1]), int(color[2])),
+            scalars="color",
+            clim=(0, neighbor_cap),
+            cmap="summer",
             diffuse=0.5,
             ambient=0.5,
         )
 
     # Define camera
-    # TODO MAGIC NUMBERS
-    plotter.camera.position = (100e-6, -300e-6, -300e-6)
-    plotter.camera.focal_point = (100e-6, 25e-6, 22.5e-6)
-
-    plotter.enable_ssao(radius=12)
+    dx = 0.05 * np.array(domain_size)
+    lower = -dx
+    upper = +dx + np.array(domain_size)
+    bounds = (lower[0], upper[0], lower[1], upper[1], lower[2], upper[2])
+    pv.Plotter.view_xy(plotter, bounds=bounds)
+    pv.Plotter.enable_ssao(plotter, radius=12)
     plotter.enable_anti_aliasing()
     img = plotter.screenshot(opath, transparent_background=transparent_background)
     plotter.close()
@@ -138,6 +140,7 @@ def __plot_spheres_helper(args):
 
 def plot_all_spheres(
     path: Path,
+    config: Configuration,
     n_threads: int | None = None,
     overwrite: bool = False,
     transparent_background: bool = False,
@@ -151,6 +154,9 @@ def plot_all_spheres(
             n_threads = 1
     args = [(it,) for it in iterations]
     kwargs = {
+        "domain_size": config.domain_size,
+        "growth_rate_max": config.growth_rate,
+        "neighbor_cap": config.neighbor_cap,
         "path": path,
         "overwrite": overwrite,
         "transparent_background": transparent_background,
@@ -158,9 +164,7 @@ def plot_all_spheres(
     with concurrent.futures.ProcessPoolExecutor(max_workers=n_threads) as executor:
         _ = list(
             tqdm.tqdm(
-                executor.map(
-                    __plot_spheres_helper, zip(args, itertools.repeat(kwargs))
-                ),
+                executor.map(__plot_spheres_helper, zip(args, itertools.repeat(kwargs))),
                 total=len(iterations),
             )
         )
@@ -187,9 +191,7 @@ if __name__ == "_main__":
         help="Input path of files. If not given,\
             it will be determined automatically by searching in './out/'",
     )
-    parser.add_argument(
-        "-o", "--output-path", help="Path where to store generated images."
-    )
+    parser.add_argument("-o", "--output-path", help="Path where to store generated images.")
 
     args = parser.parse_args()
 

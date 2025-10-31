@@ -1,2 +1,5 @@
 .venv
 target
+Cargo.lock
+out
+cr_nematic_structure/__pycache__
