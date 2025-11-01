@@ -78,13 +78,8 @@ impl Cycle<Agent> for Agent {
         cell: &mut Agent,
     ) -> Option<cellular_raza::prelude::CycleEvent> {
         // Set the growth rate depending on the number of neighbors
-        let growth_rate = if cell.neighbors > 0 {
-            (cell.growth_rate * (cell.neighbor_cap - cell.neighbors) as f64
-                / cell.neighbor_cap as f64)
-                .max(0.0)
-        } else {
-            cell.growth_rate
-        };
+        let q = (1.0 - cell.neighbors as f64 / cell.neighbor_cap as f64).clamp(0.0, 1.0);
+        let growth_rate = cell.growth_rate * q;
 
         if cell.mechanics.pos.nrows() == 1 {
             cell.interaction.0.radius += growth_rate * dt;
