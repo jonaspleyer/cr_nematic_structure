@@ -99,7 +99,7 @@ impl Cycle<Agent> for Agent {
         rng: &mut rand_chacha::ChaCha8Rng,
         cell: &mut Agent,
     ) -> Result<Agent, cellular_raza::prelude::DivisionError> {
-        let c2_mechanics = cell.mechanics.divide(rng, cell.interaction.0.radius)?;
+        let c2_mechanics = cell.mechanics.divide(cell.interaction.0.radius)?;
         if c2_mechanics.pos.nrows() == 1 {
             cell.interaction.0.radius /= core::f64::consts::SQRT_2;
         }
