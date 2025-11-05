@@ -19,7 +19,7 @@ log = "0.4.28"
 nalgebra = { version = "0.34", features = ["serde", "serde-serialize"] }
 num = { version = "0.4.3", features = ["rand", "serde"] }
 pyo3 = { version = "0.26", features = ["serde", "py-clone", "multiple-pymethods"] }
-pyo3-stub-gen = "0.15.1"
+pyo3-stub-gen = "0.17.0"
 rand = { version = "0.9", features = ["serde"] }
 rand_chacha = { version = "0.9", features = ["serde"] }
 rand_distr = "0.5.1"
