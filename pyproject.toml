@@ -18,6 +18,7 @@ dependencies = [
     "tqdm>=4.60",
     "scikit-image>=0.24",
     "matplotlib",
+    "pandas",
 ]
 [project.scripts]
 
