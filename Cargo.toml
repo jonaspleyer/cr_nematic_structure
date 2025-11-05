@@ -12,7 +12,7 @@ doctest = false
 
 [dependencies]
 cellular_raza = { version = "0.4.0", features = ["approx", "pyo3"] }
-cudarc = { version = "0.17.3", features = ["cuda-12080"] }
+# cudarc = { version = "0.17.3", features = ["cuda-12080"] }
 env_logger = "0.11.8"
 itertools = "0.14"
 log = "0.4.28"

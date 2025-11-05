@@ -358,7 +358,7 @@ pub fn run_simulation(config: &Configuration) -> Result<std::path::PathBuf, Simu
     Ok(storage.cells.extract_builder().get_full_path())
 }
 
-use cudarc::{
+/* use cudarc::{
     driver::{CudaContext, DriverError, LaunchConfig, PushKernelArg},
     nvrtc::Ptx,
 };
@@ -396,4 +396,4 @@ fn main() -> Result<(), DriverError> {
     assert_eq!(&a_host, a_host_2.as_slice());
 
     Ok(())
-}
+}*/
