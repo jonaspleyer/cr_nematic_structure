@@ -11,7 +11,7 @@ crate-type = ["cdylib", "rlib"]
 doctest = false
 
 [dependencies]
-cellular_raza = { version = "0.4.0", features = ["approx", "pyo3"] }
+cellular_raza = { version = "0.5.0", features = ["approx", "pyo3"] }
 # cudarc = { version = "0.17.3", features = ["cuda-12080"] }
 env_logger = "0.11.8"
 itertools = "0.14"
